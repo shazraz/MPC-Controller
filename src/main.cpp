@@ -87,39 +87,42 @@ int main() {
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
+          int n_waypoints = ptsx.size();
+
           double px = j[1]["x"];
           double py = j[1]["y"];
           double psi = j[1]["psi"];
+          
           double v = j[1]["speed"];
-
           //Convert v to m/s
           v *= 0.44704;
 
           //Capture current steer and throttle values
           //Steering angle is in radians
-          double steer_value = j[1]["steering_angle"];
-          //steer_value *= -1; //Flip the sign of the steering angle after receiving from the simulator to take into account turn direction	
+          double delta = j[1]["steering_angle"];
+          delta *= -1; //Flip the sign of the steering angle after receiving from the simulator to take into account turn direction	
 
           //Throttle value is in [-1, 1]
-          double throttle_value = j[1]["throttle"];
+          double a = j[1]["throttle"];
          
           //Transform the waypoints returned by the simulator to car coordinates
           //Note that the vehicle direction is the x-axis and the z-axis points out the right of the vehicle
-
           double sin_psi = sin(psi);
           double cos_psi = cos(psi);
 
-          for (unsigned int i = 0; i < ptsx.size(); ++i){
+          for (int i = 0; i < n_waypoints; i++){
 
           	//offset the axis origin to the car location
           	double shift_x = ptsx[i] - px;
           	double shift_y = ptsy[i] - py;
 
-          	//Rotate the waypoint coordinates counter-clockwise by -psi
+          	//Rotate the waypoint coordinates clockwise by psi
+          	//Waypoint coordinates are x, z
+          	//Vehicle coordinates are x', z'
+          	//Psi is measured positive from x to z
           	//https://en.wikipedia.org/wiki/Transformation_matrix
           	//Use trig identities: 
-          	//cos(-psi) = cos(psi)
-          	//sin(-psi) = -sin(psi)
+          	
           	ptsx[i] = (shift_x * cos_psi + shift_y * sin_psi);
           	ptsy[i] = (shift_x * -sin_psi + shift_y * cos_psi);
           }
@@ -128,9 +131,8 @@ int main() {
           //https://stackoverflow.com/a/39157864
           double* ptr_ptsx = &ptsx[0];
           double* ptr_ptsy = &ptsy[0];
-
-          Eigen::Map<Eigen::VectorXd> ptsx_car(ptr_ptsx, ptsx.size());
-          Eigen::Map<Eigen::VectorXd> ptsy_car(ptr_ptsy, ptsy.size());
+          Eigen::Map<Eigen::VectorXd> ptsx_car(ptr_ptsx, n_waypoints);
+          Eigen::Map<Eigen::VectorXd> ptsy_car(ptr_ptsy, n_waypoints);
 
           //Fit the waypoints to a 3rd order polynomial
           auto coeffs = polyfit(ptsx_car, ptsy_car, 3);
@@ -141,28 +143,28 @@ int main() {
           double epsi = -atan(coeffs[1]);
 
           //Use kinematic equations to transition state to consider latency
-          double latency = 0.1;
+          /*double latency = 0.1; //set latency to 100 ms
           const double Lf = 2.67;
 
-          double x_latency = v * latency; //cos(0) = 1
-          double y_latency = 0; //sin(0) = 0
-          double psi_latency = v * steer_value / Lf * latency; //psi = 0 without latency
-          double v_latency = v + throttle_value * latency;
+          double x_latency = v * cos(psi) * latency; //cos(0) = 1
+          double y_latency = v * sin(psi) * latency; //sin(0) = 0
+          double psi_latency = v * delta / Lf * latency; //psi = 0 without latency
+          double v_latency = v + a * latency;
           double cte_latency = cte + v * sin(epsi) * latency;
-          double epsi_latency = epsi + psi_latency;
+          double epsi_latency = epsi + psi_latency;*/
 
           Eigen::VectorXd state(6);
-          //state << 0, 0, 0, v, cte, epsi;
-          state << x_latency, y_latency, psi_latency, v_latency, cte_latency, epsi_latency;
+          state << 0, 0, 0, v, cte, epsi;
+          //state << x_latency, y_latency, psi_latency, v_latency, cte_latency, epsi_latency;
 
           //Call the MPC solver
           auto solution = mpc.Solve(state, coeffs);
 
+          //Construct the message to send back to the simulator
           json msgJson;
-          // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
-          // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          // Multiply steer value by -1 before sending it back to the simulator
-          steer_value = -solution[0]/deg2rad(25);
+          double steer_value;
+          double throttle_value;
+          steer_value = -solution[0]/deg2rad(25); //flip the steering value and normalize prior to sending to the simulator
           throttle_value = solution[1];
 
           msgJson["steering_angle"] = steer_value;
@@ -198,7 +200,7 @@ int main() {
 
           for (int i = 1; i < n_points; i++){
           	next_x_vals.push_back(i * increment);
-          	next_y_vals.push_back(polyeval(coeffs, i*increment));
+          	next_y_vals.push_back(polyeval(coeffs, i * increment));
           }
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
@@ -210,7 +212,7 @@ int main() {
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           //std::cout << msg << std::endl;
-          std::cout << "Steer Angle: "<< rad2deg(-solution[0]) << " Throttle Value: " << throttle_value <<std::endl;
+          std::cout << "Steer Angle: "<< rad2deg(-solution[0]) << " Throttle Value: " << throttle_value << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.

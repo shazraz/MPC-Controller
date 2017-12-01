@@ -6,8 +6,8 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 20;
-double dt = 0.2;
+size_t N = 10;
+double dt = 0.1;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -21,7 +21,7 @@ double dt = 0.2;
 // This is the length from front to CoG that has a similar radius.
 const double Lf = 2.67;
 
-double ref_v = 50 * 0.44704; //Covert reference velocity into m/s
+double ref_v = 25 * 0.44704; //Covert reference velocity into m/s
 double ref_cte = 0;
 double ref_epsi = 0;
 
@@ -49,26 +49,35 @@ class FG_eval {
 
     fg[0] = 0;
 
+    //Define weights for the cost function
+    const int cte_weight = 100;
+    const int epsi_weight = 100;
+    const int v_weight = 10;
+    const int delta_weight = 2000;
+    const int a_weight = 10;
+    const int delta_rate_weight = 1500;
+    const int a_rate_weight = 100;
+
     //Set up the cost function
     for (unsigned int t = 0; t < N; t++){
       //Penalize the cross track error
-      fg[0] += 5000 * CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += cte_weight * CppAD::pow(vars[cte_start + t], 2);
       //Penalize the psi error
-      fg[0] += 5000 * CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += epsi_weight * CppAD::pow(vars[epsi_start + t], 2);
       //Penalize the difference from the reference velocity
-      fg[0] += 250 * CppAD::pow(vars[v_start + t] - ref_v, 2);
+      fg[0] += v_weight * CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     //Minimize actuations
     for (unsigned int t = 0; t < N - 1; t++) {
-      fg[0] += 1000 * CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += 500 * CppAD::pow(vars[a_start + t], 2);
+      fg[0] += delta_weight * CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += a_weight * CppAD::pow(vars[a_start + t], 2);
     }
 
     //Minimize the difference between two actuations
     for (unsigned int t = 0; t < N - 2; t++) {
-      fg[0] += 750 * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += 500 * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += delta_rate_weight * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += a_rate_weight * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 
     //Set the constraints at time 0 to the initial state
