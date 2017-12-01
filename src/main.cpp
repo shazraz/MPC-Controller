@@ -143,19 +143,21 @@ int main() {
           double epsi = -atan(coeffs[1]);
 
           //Use kinematic equations to transition state to consider latency
-          /*double latency = 0.1; //set latency to 100 ms
+          double latency = 0.1; //set latency to 100 ms
           const double Lf = 2.67;
 
-          double x_latency = v * cos(psi) * latency; //cos(0) = 1
-          double y_latency = v * sin(psi) * latency; //sin(0) = 0
-          double psi_latency = v * delta / Lf * latency; //psi = 0 without latency
+          //double x_latency = v * cos(epsi) * latency; 
+          //double y_latency = v * sin(epsi) * latency;
+          double x_latency = v * latency; 
+          double y_latency = 0;
+          double psi_latency = v * delta / Lf * latency;
           double v_latency = v + a * latency;
           double cte_latency = cte + v * sin(epsi) * latency;
-          double epsi_latency = epsi + psi_latency;*/
+          double epsi_latency = epsi + psi_latency;
 
           Eigen::VectorXd state(6);
-          state << 0, 0, 0, v, cte, epsi;
-          //state << x_latency, y_latency, psi_latency, v_latency, cte_latency, epsi_latency;
+          //state << 0, 0, 0, v, cte, epsi;
+          state << x_latency, y_latency, psi_latency, v_latency, cte_latency, epsi_latency;
 
           //Call the MPC solver
           auto solution = mpc.Solve(state, coeffs);
@@ -222,7 +224,7 @@ int main() {
           //
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
-          //this_thread::sleep_for(chrono::milliseconds(100));
+          this_thread::sleep_for(chrono::milliseconds(100));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {

@@ -21,7 +21,7 @@ double dt = 0.1;
 // This is the length from front to CoG that has a similar radius.
 const double Lf = 2.67;
 
-double ref_v = 25 * 0.44704; //Covert reference velocity into m/s
+double ref_v = 30 * 0.44704; //Covert reference velocity into m/s
 double ref_cte = 0;
 double ref_epsi = 0;
 
@@ -50,13 +50,13 @@ class FG_eval {
     fg[0] = 0;
 
     //Define weights for the cost function
-    const int cte_weight = 100;
-    const int epsi_weight = 100;
+    const int cte_weight = 75;
+    const int epsi_weight = 75;
     const int v_weight = 10;
-    const int delta_weight = 2000;
-    const int a_weight = 10;
-    const int delta_rate_weight = 1500;
-    const int a_rate_weight = 100;
+    const int delta_weight = 2500;
+    const int a_weight = 100;
+    const int delta_rate_weight = 4500;
+    const int a_rate_weight = 250;
 
     //Set up the cost function
     for (unsigned int t = 0; t < N; t++){
