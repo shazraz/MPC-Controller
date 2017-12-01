@@ -52,23 +52,23 @@ class FG_eval {
     //Set up the cost function
     for (unsigned int t = 0; t < N; t++){
       //Penalize the cross track error
-      fg[0] += 1000 * CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += 5000 * CppAD::pow(vars[cte_start + t], 2);
       //Penalize the psi error
-      fg[0] += 1000 * CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += 5000 * CppAD::pow(vars[epsi_start + t], 2);
       //Penalize the difference from the reference velocity
       fg[0] += 250 * CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     //Minimize actuations
     for (unsigned int t = 0; t < N - 1; t++) {
-      fg[0] += 500 * CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += 1000 * CppAD::pow(vars[delta_start + t], 2);
       fg[0] += 500 * CppAD::pow(vars[a_start + t], 2);
     }
 
     //Minimize the difference between two actuations
     for (unsigned int t = 0; t < N - 2; t++) {
-      fg[0] += 500 * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += 50 * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += 750 * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += 500 * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 
     //Set the constraints at time 0 to the initial state

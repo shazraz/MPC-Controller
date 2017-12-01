@@ -98,30 +98,30 @@ int main() {
           //Capture current steer and throttle values
           //Steering angle is in radians
           double steer_value = j[1]["steering_angle"];
+          //steer_value *= -1; //Flip the sign of the steering angle after receiving from the simulator to take into account turn direction	
+
           //Throttle value is in [-1, 1]
           double throttle_value = j[1]["throttle"];
-
-          //Use kinematic equations to transition state to consider latency
-          //double latency = 0.1;
-          //const double Lf = 2.67;
-
-          //v += throttle_value*latency;
-          //px += v * cos(psi) * latency;
-          //py += v * sin(psi) * latency;
-          //psi += v * -steer_value / Lf * latency;
-          
+         
           //Transform the waypoints returned by the simulator to car coordinates
           //Note that the vehicle direction is the x-axis and the z-axis points out the right of the vehicle
+
+          double sin_psi = sin(psi);
+          double cos_psi = cos(psi);
+
           for (unsigned int i = 0; i < ptsx.size(); ++i){
 
           	//offset the axis origin to the car location
           	double shift_x = ptsx[i] - px;
           	double shift_y = ptsy[i] - py;
 
-          	//Rotate the waypoint coordinates counter-clockwise by -psi -> identical to a clockwise psi rotation
+          	//Rotate the waypoint coordinates counter-clockwise by -psi
           	//https://en.wikipedia.org/wiki/Transformation_matrix
-          	ptsx[i] = (shift_x * cos(psi) + shift_y * sin(psi));
-          	ptsy[i] = (shift_x * -sin(psi) + shift_y * cos(psi));
+          	//Use trig identities: 
+          	//cos(-psi) = cos(psi)
+          	//sin(-psi) = -sin(psi)
+          	ptsx[i] = (shift_x * cos_psi + shift_y * sin_psi);
+          	ptsy[i] = (shift_x * -sin_psi + shift_y * cos_psi);
           }
 
           //Convert the waypoints arrays to an Eigen vector typedef to be used with MPC::Solve
@@ -140,12 +140,20 @@ int main() {
           //Calculate error in heading using psi = 0 due to rotation of waypoints
           double epsi = -atan(coeffs[1]);
 
-          //Update cte and epsi to account for latency
-          //cte += v * sin(epsi) * latency;
-          //epsi +=  v * steer_value / Lf * latency;
+          //Use kinematic equations to transition state to consider latency
+          double latency = 0.1;
+          const double Lf = 2.67;
+
+          double x_latency = v * latency; //cos(0) = 1
+          double y_latency = 0; //sin(0) = 0
+          double psi_latency = v * steer_value / Lf * latency; //psi = 0 without latency
+          double v_latency = v + throttle_value * latency;
+          double cte_latency = cte + v * sin(epsi) * latency;
+          double epsi_latency = epsi + psi_latency;
 
           Eigen::VectorXd state(6);
-          state << 0, 0, 0, v, cte, epsi;
+          //state << 0, 0, 0, v, cte, epsi;
+          state << x_latency, y_latency, psi_latency, v_latency, cte_latency, epsi_latency;
 
           //Call the MPC solver
           auto solution = mpc.Solve(state, coeffs);
@@ -153,6 +161,7 @@ int main() {
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
+          // Multiply steer value by -1 before sending it back to the simulator
           steer_value = -solution[0]/deg2rad(25);
           throttle_value = solution[1];
 
