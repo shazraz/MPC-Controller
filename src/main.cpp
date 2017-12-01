@@ -214,7 +214,7 @@ int main() {
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           //std::cout << msg << std::endl;
-          std::cout << "Steer Angle: "<< rad2deg(-solution[0]) << " Throttle Value: " << throttle_value << std::endl;
+          //std::cout << "Steer Angle: "<< rad2deg(-solution[0]) << " Throttle Value: " << throttle_value << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.
