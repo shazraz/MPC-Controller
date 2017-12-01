@@ -110,7 +110,7 @@ int main() {
           double sin_psi = sin(psi);
           double cos_psi = cos(psi);
 
-          for (int i = 0; i < n_waypoints; i++){
+          for (int i = 0; i < n_waypoints; ++i){
 
           	//offset the axis origin to the car location
           	double shift_x = ptsx[i] - px;
@@ -146,8 +146,6 @@ int main() {
           double latency = 0.1; //set latency to 100 ms
           const double Lf = 2.67;
 
-          //double x_latency = v * cos(epsi) * latency; 
-          //double y_latency = v * sin(epsi) * latency;
           double x_latency = v * latency; 
           double y_latency = 0;
           double psi_latency = v * delta / Lf * latency;
@@ -172,42 +170,25 @@ int main() {
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
 
-          //Display the MPC predicted trajectory 
-          vector<double> mpc_x_vals;
-          vector<double> mpc_y_vals;
-
-          //Start at i = 2 to extract mpc x and y vals
-          for (unsigned int i = 2; i < solution.size(); i++){
-          	if (i%2 == 0){
-          		mpc_x_vals.push_back(solution[i]);
-          	}
-          	else {
-          		mpc_y_vals.push_back(solution[i]);
-          	}
-          }
-
-          //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
-          // the points in the simulator are connected by a Green line
-
-          msgJson["mpc_x"] = mpc_x_vals;
-          msgJson["mpc_y"] = mpc_y_vals;
+          //Display the MPC predicted trajectory faster
+          //Inspired by https://github.com/NikolasEnt/Model-Predictive-Control
+          msgJson["mpc_x"] = mpc.x_vals;
+          msgJson["mpc_y"] = mpc.y_vals;
 
           //Display the waypoints/reference line
           vector<double> next_x_vals;
           vector<double> next_y_vals;
 
           //Populate the polynomial coordinates fitted to the waypoints
-          int n_points = 20;
+          int n_points = 15;
           double increment = 2.;
 
-          for (int i = 1; i < n_points; i++){
+          for (int i = 1; i < n_points; ++i){
           	next_x_vals.push_back(i * increment);
           	next_y_vals.push_back(polyeval(coeffs, i * increment));
           }
 
-          //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
-          // the points in the simulator are connected by a Yellow line
-
+          //Display the fitted trajectory
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
 
