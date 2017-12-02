@@ -64,4 +64,23 @@ The implemented controller simulates a latency of 100ms between the calculation 
 In this case, the vehicle state is transitioned using the kinematic model defined above in the vehicles frame of reference (i.e. vehicle at the origin with zero heading). The transitioned state is then fed into the MPC solver. This can be found in lines 145-158 of main.cpp.
 
 ## 6. Tuning & Results
+The hyper-parameters to be tuned include the weights of all the cost function terms as well as the number of timesteps, N, and timesstep interval, dt, of the prediction horizon.
 
+The parameter N determines the number of timesteps over which the cost function will be optimized and increases the total computation time required to solve for the actuations. A large N without the appropriate computational resources results in instability of the controller and large oscillations are observed in the vehicle movement. 
+
+The parameter dt determines the interval between actuations. A large dt results in actuations being applied further apart in time resulting in larger deviations from the reference trajectory which also leads to larger actuations and instability of the controller which manifests as oscillations around the reference trajectory.
+
+For the hardware being used, an optimal value of N and dt were 10 and 0.1 respectively resulting in a prediction horizon of 1 second. In addition, the simulator had to be run in the fastest graphics mode and the smallest resolution to achieve the best performance of the controller.
+
+The weights were also tuned so that large actuations and a large rate of change of actuations were both heavily penalized. This resulted in a smooth steering response and a tendency to not oversteer to compensate for the CTE or EPSI. In addition, it was noted that a large weight on either the CTE or EPSI would cause oscillations around the reference trajectory which would result in instability at high speeds. Therefore, these weights were dropped as the reference speed of the controller was increased. Finally, the weight of the velocity difference was gradually increased until the vehicle reached its reference velocity consistently. The final values of all hyperparameters are summarized below.
+
+* N: 10
+* dt: 0.1
+* CTE_weight: 3
+* EPSI_weight: 3
+* V_weight: 100
+* delta_weight: 2500
+* a_weight: 100
+* delta_rate_weight: 4500
+* a_rate_weight: 250
+* Reference velocity: 60 mph
