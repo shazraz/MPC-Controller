@@ -25,7 +25,9 @@ Once the environment is ready, the code can be tested as follows:
 3. Click Start in the simulator
 
 ## 3. Model Predictive Control
-Model predictive control uses the kinematic model to predict the position of the vehicle at the next time step with knowledge of its current state. The state of the vehicle consists of <x, y, psi, v, cte, epsi> defined as follows:
+Model predictive control uses the kinematic model to predict the position of the vehicle along a prediction horizon, T, consisting of N steps of duration dt. The state and actuators at each time step are calculated to minimize the controller cost function. The actuations for the next time step are applied to the vehicle and the prediction is performed again. 
+
+The state of the vehicle consists of <x, y, psi, v, cte, epsi> defined as follows:
 
 * x: x-coordinate of vehicle position
 * y: y-coordinate of vehicle position
@@ -36,15 +38,22 @@ Model predictive control uses the kinematic model to predict the position of the
 
 The kinematic model defines the transition of the state as follows:
 
-x_t+1 = x_t + v_t * cos(psi_t) * dt
-y_t+1 = y_t + v_t * sin(psi_t) * dt
-psi_t+1 = psi_t + v_t/Lf * delta * dt
-v_t+1 = v_t + a * dt
-cte_t+1 = cte_t + v_t * sin(epsi_t) * dt
-epsi_t+1 = epsi_t + v_t/Lf * delta * dt
+* x_t+1 = x_t + v_t * cos(psi_t) * dt
+* y_t+1 = y_t + v_t * sin(psi_t) * dt
+* psi_t+1 = psi_t + v_t/Lf * delta * dt
+* v_t+1 = v_t + a * dt
+* cte_t+1 = cte_t + v_t * sin(epsi_t) * dt
+* epsi_t+1 = epsi_t + v_t/Lf * delta * dt
 
 where <a, delta> are the actutations to be determined by minimizing the cost function for the model predictive controller.
 
-Model predictive control uses the kinematic model to predict the position of the vehicle along a prediction horizon, T, consisting of N steps of duration dt. The state and actuators at each time step are calculated to minimize the controller cost function. The actuations for the next time step are applied to the vehicle and the prediction is performed again.
-
 ## 4. Cost Function
+The cost function used for the model consists of the weighted sum of the squared error values for the following terms:
+
+* The cross track error of the vehicle;  `CTE x CTE_weight`
+* The error in vehicle heading; `EPSI x EPSI_weight`
+* The difference between the vehicle velocity and reference velocity; `(V - Vref) x V_weight`
+* The magnitude of the steering angle; `delta x delta_weight`
+* The magnitude of the acceleration term; `a x a_weight`
+* The rate of change of steering angle; `(delta_t+1 - delta_t) x delta_rate_weight`
+* The rate of change of acceleration; `(a_t+1 - a_t) x a_rate_weight`
