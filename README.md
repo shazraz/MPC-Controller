@@ -68,7 +68,7 @@ In this case, the vehicle state is transitioned using the kinematic model define
 Note that the steering angle needs to be flipped (multiplied by -1) prior to transitioning the model to take into account turning convention differences between the simulator and MPC model. The calculated steer value is also normalized and flipped prior to passing it back into the simulator.
 
 ## 6. Tuning & Results
-The hyper-parameters to be tuned include the weights of all the cost function terms as well as the number of timesteps, N, and timesstep interval, dt, of the prediction horizon.
+The hyper-parameters to be tuned include the weights of all the cost function terms as well as the number of timesteps, N, and timestep interval, dt, of the prediction horizon.
 
 The parameter N determines the number of timesteps over which the cost function will be optimized and increases the total computation time required to solve for the actuations. A large N without the appropriate computational resources results in instability of the controller and large oscillations are observed in the vehicle movement. 
 
