@@ -57,3 +57,11 @@ The cost function used for the model consists of the weighted sum of the squared
 * The magnitude of the acceleration term; `a x a_weight`
 * The rate of change of steering angle; `(delta_t+1 - delta_t) x delta_rate_weight`
 * The rate of change of acceleration; `(a_t+1 - a_t) x a_rate_weight`
+
+## 5. Latency
+The implemented controller simulates a latency of 100ms between the calculation and implementation of the actuations to approximate the real-world delay of applying actuations to a vehicle. Unlike a PID controller, the MPC is capable of accounting for this delay in the model.
+
+In this case, the vehicle state is transitioned using the kinematic model defined above in the vehicles frame of reference (i.e. vehicle at the origin with zero heading). The transitioned state is then fed into the MPC solver. This can be found in lines 145-158 of main.cpp.
+
+## 6. Tuning & Results
+
