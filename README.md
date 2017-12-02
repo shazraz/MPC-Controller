@@ -31,8 +31,8 @@ The state of the vehicle consists of <x, y, psi, v, cte, epsi> defined as follow
 
 * x: x-coordinate of vehicle position
 * y: y-coordinate of vehicle position
-* psi: vehicle headed
-* v: vehicle velocity magnitude
+* psi: vehicle heading
+* v: vehicle velocity magnitude in m/s converted from mph
 * cte: cross track error (variation from reference line)
 * epsi: error in vehicle heading
 
@@ -46,6 +46,8 @@ The kinematic model defines the transition of the state as follows:
 * epsi_t+1 = epsi_t + v_t/Lf * delta * dt
 
 where <a, delta> are the actutations to be determined by minimizing the cost function for the model predictive controller.
+
+The reference trajectory in this model is determined by fitting a third order polynomial to reference waypoints returned by the simulator. These waypoints are translated and rotated to bring them into the vehicle's frame of reference prior to polynomial fitting. The CTE and EPSI are then calculated by evaluating the polynomial at x = 0 and determing the angle of the reference trajectory with the x-axis at the origin.
 
 ## 4. Cost Function
 The cost function used for the model consists of the weighted sum of the squared error values for the following terms:
@@ -62,6 +64,8 @@ The cost function used for the model consists of the weighted sum of the squared
 The implemented controller simulates a latency of 100ms between the calculation and implementation of the actuations to approximate the real-world delay of applying actuations to a vehicle. Unlike a PID controller, the MPC is capable of accounting for this delay in the model.
 
 In this case, the vehicle state is transitioned using the kinematic model defined above in the vehicles frame of reference (i.e. vehicle at the origin with zero heading). The transitioned state is then fed into the MPC solver. This can be found in lines 145-158 of main.cpp.
+
+Note that the steering angle needs to be flipped (multiplied by -1) prior to transitioning the model to take into account turning convention differences between the simulator and MPC model. The calculated steer value is also normalized and flipped prior to passing it back into the simulator.
 
 ## 6. Tuning & Results
 The hyper-parameters to be tuned include the weights of all the cost function terms as well as the number of timesteps, N, and timesstep interval, dt, of the prediction horizon.
