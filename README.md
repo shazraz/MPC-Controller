@@ -72,6 +72,14 @@ The parameter dt determines the interval between actuations. A large dt results 
 
 For the hardware being used, an optimal value of N and dt were 10 and 0.1 respectively resulting in a prediction horizon of 1 second. In addition, the simulator had to be run in the fastest graphics mode and the smallest resolution to achieve the best performance of the controller.
 
+Here is a summary of various values for N & dt attempted with a fixed set of weights after incorporating latency into the model:
+
+* N: 5, dt: 0.2; The vehicle deviates from the reference trajectory at the beginning of the simulation.
+* N: 10, dt: 0.2; Large oscillations are seen shortly after the start of the simulator
+* N: 10, dt: 0.05; The vehicle does not predict far enough into the future and deviates from the reference trajectory
+* N: 10, dt: 0.1; The vehicle is able to properly navigate the track
+* N: 15, dt: 0.1; The vehicle behaves erraticaly. It is assumed the optimization is not completed in time.
+
 The weights were also tuned so that large actuations and a large rate of change of actuations were both heavily penalized. This resulted in a smooth steering response and a tendency to not oversteer to compensate for the CTE or EPSI. In addition, it was noted that a large weight on either the CTE or EPSI would cause oscillations around the reference trajectory which would result in instability at high speeds. Therefore, these weights were dropped as the reference speed of the controller was increased. Finally, the weight of the velocity difference was gradually increased until the vehicle reached its reference velocity consistently. The final values of all hyperparameters are summarized below.
 
 * N: 10
